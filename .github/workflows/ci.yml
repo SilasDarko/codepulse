@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DATABASE_URL: postgres://codepulse:codepulse@localhost:5432/codepulse
+  DATABASE_URL_TEST: postgres://codepulse:codepulse@localhost:5432/codepulse_test
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: codepulse
+          POSTGRES_PASSWORD: codepulse
+          POSTGRES_DB: codepulse
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U codepulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: create test database
+        run: PGPASSWORD=codepulse psql -h localhost -U codepulse -d codepulse -c "CREATE DATABASE codepulse_test;"
+      - run: npm run db:migrate
+      - run: npm run db:migrate:test
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint-typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          # next build doesn't touch the database, but reads env at build time.
+          DATABASE_URL: postgres://codepulse:codepulse@localhost:5432/codepulse
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: codepulse
+          POSTGRES_PASSWORD: codepulse
+          POSTGRES_DB: codepulse
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U codepulse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

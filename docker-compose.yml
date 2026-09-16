@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: codepulse
+      POSTGRES_PASSWORD: codepulse
+      POSTGRES_DB: codepulse
+    ports:
+      # Host port 5433, not 5432 -- avoids clashing with any Postgres already
+      # running on your machine outside this project.
+      - "5433:5432"
+    volumes:
+      - codepulse-db:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codepulse"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # Optional: only needed if you want to see CodePulse's own metrics scraped
+  # and queried in a real Prometheus instance. The app exposes /api/metrics
+  # regardless of whether this service is running.
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    profiles: ["metrics"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - db
+
+volumes:
+  codepulse-db:

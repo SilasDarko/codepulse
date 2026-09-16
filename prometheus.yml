@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: codepulse
+    static_configs:
+      # host.docker.internal lets the Prometheus container reach the Next.js
+      # app running on your host machine via `npm run dev`.
+      - targets: ["host.docker.internal:3000"]
+    metrics_path: /api/metrics

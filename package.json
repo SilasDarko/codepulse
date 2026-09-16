@@ -1,0 +1,53 @@
+{
+  "name": "codepulse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Release debugging platform: correlates commits, PRs, CI runs, deployments, and service health into a ranked root-cause explanation.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:test": "tsx scripts/migrate.ts --test",
+    "db:studio": "drizzle-kit studio",
+    "worker": "tsx watch src/worker/index.ts",
+    "seed": "tsx scripts/seed-synthetic.ts",
+    "benchmark": "tsx scripts/benchmark.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration tests/failure",
+    "test:benchmark-smoke": "vitest run tests/benchmark",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "drizzle-orm": "^0.45.2",
+    "next": "^16.3.5",
+    "pg": "^8.23.0",
+    "prom-client": "^15.1.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitest/coverage-v8": "^3.0.5",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9.23.0",
+    "eslint-config-next": "^16.3.5",
+    "tsx": "^4.23.13",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
